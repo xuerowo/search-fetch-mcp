@@ -444,3 +444,5 @@ npx playwright install chromium
 ---
 
 *Built with ❤️ using Bun + TypeScript*
+
+*README.md 由 Claude 撰寫*
