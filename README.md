@@ -79,6 +79,108 @@ npx playwright install chromium
 npx playwright install-deps
 ```
 
+## 🔧 MCP 配置
+
+### Claude Desktop 配置
+
+在 Claude Desktop 中使用此 MCP 伺服器，需要修改配置文件：
+
+**配置文件位置**：
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+**配置內容**：
+```json
+{
+  "mcpServers": {
+    "search-fetch-mcp": {
+      "command": "bun",
+      "args": ["run", "/path/to/search-fetch-mcp/src/index.ts"],
+      "env": {
+        "LOG_LEVEL": "warn",
+        "RATE_LIMIT_RPS": "1",
+        "DEFAULT_LANGUAGE": "tw-tzh",
+        "DEFAULT_FETCH_FORMAT": "markdown",
+        "DEFAULT_USE_SPA": "true"
+      }
+    }
+  }
+}
+```
+
+### 配置參數說明
+
+| 參數 | 描述 | 預設值 | 可選值 |
+|------|------|--------|--------|
+| `LOG_LEVEL` | 日誌級別 | `warn` | `debug`, `info`, `warn`, `error` |
+| `RATE_LIMIT_RPS` | 每秒請求數限制 | `1` | 正整數 |
+| `DEFAULT_LANGUAGE` | 預設搜索語言 | `wt-wt` | 見語言代碼表 |
+| `DEFAULT_FETCH_FORMAT` | 預設獲取格式 | `markdown` | `html`, `markdown`, `text`, `json` |
+| `DEFAULT_USE_SPA` | 預設使用 SPA 模式 | `true` | `true`, `false` |
+| `DEFAULT_USE_READABILITY` | 預設使用內容提取 | `true` | `true`, `false` |
+
+### 配置範例
+
+**基本配置**（適合一般使用）：
+```json
+{
+  "mcpServers": {
+    "search-fetch-mcp": {
+      "command": "bun",
+      "args": ["run", "C:/path/to/search-fetch-mcp/src/index.ts"]
+    }
+  }
+}
+```
+
+**高級配置**（自訂設定）：
+```json
+{
+  "mcpServers": {
+    "search-fetch-mcp": {
+      "command": "bun",
+      "args": ["run", "C:/path/to/search-fetch-mcp/src/index.ts"],
+      "env": {
+        "LOG_LEVEL": "info",
+        "RATE_LIMIT_RPS": "2",
+        "DEFAULT_LANGUAGE": "us-en",
+        "DEFAULT_FETCH_FORMAT": "json",
+        "DEFAULT_USE_SPA": "true",
+        "DEFAULT_USE_READABILITY": "false",
+        "SEARCH_TIMEOUT": "45000"
+      }
+    }
+  }
+}
+```
+
+**多語言配置**（台灣使用者）：
+```json
+{
+  "mcpServers": {
+    "search-fetch-mcp": {
+      "command": "bun",
+      "args": ["run", "/path/to/search-fetch-mcp/src/index.ts"],
+      "env": {
+        "DEFAULT_LANGUAGE": "tw-tzh",
+        "DEFAULT_SAFE_SEARCH": "moderate",
+        "LOG_LEVEL": "warn"
+      }
+    }
+  }
+}
+```
+
+### 重新啟動 Claude Desktop
+
+配置完成後，請重新啟動 Claude Desktop 以載入新的 MCP 伺服器。成功後，您就可以在對話中使用以下工具：
+
+- `ddg_search` - DuckDuckGo 搜索
+- `webpage_fetch` - 網頁內容獲取  
+- `ddg_batch_search` - 批量搜索
+- `batch_fetch` - 批量網頁獲取
+
 ## 🎯 MCP 工具說明
 
 ### 1. DuckDuckGo 搜索 (`ddg_search`)
