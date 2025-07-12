@@ -90,24 +90,6 @@ npx playwright install-deps
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
-**配置內容**：
-```json
-{
-  "mcpServers": {
-    "search-fetch-mcp": {
-      "command": "bun",
-      "args": ["/path/to/search-fetch-mcp/src/index.ts"],
-      "env": {
-        "LOG_LEVEL": "warn",
-        "RATE_LIMIT_RPS": "1",
-        "DEFAULT_LANGUAGE": "tw-tzh",
-        "DEFAULT_FETCH_FORMAT": "markdown",
-        "DEFAULT_USE_SPA": "true"
-      }
-    }
-  }
-}
-```
 
 ### 配置參數說明
 
@@ -155,22 +137,6 @@ npx playwright install-deps
 }
 ```
 
-**多語言配置**（台灣使用者）：
-```json
-{
-  "mcpServers": {
-    "search-fetch-mcp": {
-      "command": "bun",
-      "args": ["/path/to/search-fetch-mcp/src/index.ts"],
-      "env": {
-        "DEFAULT_LANGUAGE": "tw-tzh",
-        "DEFAULT_SAFE_SEARCH": "moderate",
-        "LOG_LEVEL": "warn"
-      }
-    }
-  }
-}
-```
 
 ### 重新啟動 Claude Desktop
 
