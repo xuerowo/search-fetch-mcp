@@ -96,7 +96,7 @@ npx playwright install-deps
   "mcpServers": {
     "search-fetch-mcp": {
       "command": "bun",
-      "args": ["run", "/path/to/search-fetch-mcp/src/index.ts"],
+      "args": ["/path/to/search-fetch-mcp/src/index.ts"],
       "env": {
         "LOG_LEVEL": "warn",
         "RATE_LIMIT_RPS": "1",
@@ -128,7 +128,7 @@ npx playwright install-deps
   "mcpServers": {
     "search-fetch-mcp": {
       "command": "bun",
-      "args": ["run", "C:/path/to/search-fetch-mcp/src/index.ts"]
+      "args": ["C:/path/to/search-fetch-mcp/src/index.ts"]
     }
   }
 }
@@ -140,7 +140,7 @@ npx playwright install-deps
   "mcpServers": {
     "search-fetch-mcp": {
       "command": "bun",
-      "args": ["run", "C:/path/to/search-fetch-mcp/src/index.ts"],
+      "args": ["C:/path/to/search-fetch-mcp/src/index.ts"],
       "env": {
         "LOG_LEVEL": "info",
         "RATE_LIMIT_RPS": "2",
@@ -161,7 +161,7 @@ npx playwright install-deps
   "mcpServers": {
     "search-fetch-mcp": {
       "command": "bun",
-      "args": ["run", "/path/to/search-fetch-mcp/src/index.ts"],
+      "args": ["/path/to/search-fetch-mcp/src/index.ts"],
       "env": {
         "DEFAULT_LANGUAGE": "tw-tzh",
         "DEFAULT_SAFE_SEARCH": "moderate",
