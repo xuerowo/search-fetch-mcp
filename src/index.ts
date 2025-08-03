@@ -77,7 +77,7 @@ export class DuckDuckGoMCPServer {
     this.server.registerTool(
       "ddg_search",
       {
-        title: "DuckDuckGo 搜索",
+        title: "單一搜索",
         description: "根據單一關鍵詞返回相關網頁標題、連結、摘要或發布/修改日期。適合特定主題搜索、最新資訊查詢。獲得結果後，建議用 webpage_fetch 或 batch_fetch 進一步獲取具體內容。",
         inputSchema: {
           query: z.string().min(1).describe('搜索查詢字符串，建議保持主題一致性。支援高級運算符：site:example.com (限制網站)、filetype:pdf (文件類型)、intitle:關鍵詞 (標題搜索)等。'),
@@ -87,7 +87,7 @@ export class DuckDuckGoMCPServer {
           time_range: z.enum(["day", "week", "month", "year"]).optional().describe("時間範圍過濾: day (過去一天), week (過去一週), month (過去一個月), year (過去一年)。適合搜索最新資訊、新聞事件或技術更新。"),
         },
         annotations: {
-          title: "DuckDuckGo 搜索",
+          title: "單一搜索",
           readOnlyHint: true,
           openWorldHint: true,
           dangerousOperation: false,
@@ -120,7 +120,7 @@ export class DuckDuckGoMCPServer {
     this.server.registerTool(
       "webpage_fetch",
       {
-        title: "網頁內容獲取",
+        title: "單一網頁獲取",
         description: "當你已有明確URL且需要詳細內容時使用。適用於：閱讀特定文章、分析網頁資料、提取詳細資訊。如果不知道URL，必須先用 ddg_search 搜尋。",
         inputSchema: {
           url: z.string().url().describe("要獲取的網頁 URL"),
@@ -133,7 +133,7 @@ export class DuckDuckGoMCPServer {
           customUserAgent: z.string().optional().describe("自定義 User-Agent 字串（僅在 userAgentMode=custom 時使用）。建議使用真實瀏覽器的 User-Agent 字串。"),
         },
         annotations: {
-          title: "網頁內容獲取",
+          title: "單一網頁獲取",
           readOnlyHint: true,
           openWorldHint: true,
           dangerousOperation: false,
@@ -170,7 +170,7 @@ export class DuckDuckGoMCPServer {
     this.server.registerTool(
       "ddg_batch_search",
       {
-        title: "DuckDuckGo 批量搜索",
+        title: "批量搜索",
         description: "並行搜索多個相關查詢返回多個查詢各自相關網頁標題、連結、摘要或發布/修改日期，適合比較分析、多角度研究。每個查詢保持獨立焦點，避免單一查詢包含多個對比概念。獲得結果後，建議用 batch_fetch 一次性獲取多個頁面完整內容。",
         inputSchema: {
           queries: z.array(z.string().min(1)).min(1).max(5).describe("要並行搜索的查詢列表，每個查詢聚焦單一角度或概念"),
@@ -180,7 +180,7 @@ export class DuckDuckGoMCPServer {
           time_range: z.enum(["day", "week", "month", "year"]).optional().describe("時間範圍過濾（所有查詢使用相同設定）"),
         },
         annotations: {
-          title: "DuckDuckGo 批量搜索",
+          title: "批量搜索",
           readOnlyHint: true,
           openWorldHint: true,
           dangerousOperation: false,
