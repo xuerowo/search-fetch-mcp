@@ -80,7 +80,7 @@ export class DuckDuckGoMCPServer {
         title: "DuckDuckGo 搜索",
         description: "根據單一關鍵詞返回相關網頁標題、連結、摘要或發布/修改日期。適合特定主題搜索、最新資訊查詢。獲得結果後，建議用 webpage_fetch 或 batch_fetch 進一步獲取具體內容。",
         inputSchema: {
-          query: z.string().min(1).describe('搜索查詢字符串，建議保持主題一致性。支援高級運算符：site:example.com (限制網站)、"完整詞組" (精確搜索)、filetype:pdf (文件類型)、intitle:關鍵詞 (標題搜索)等。'),
+          query: z.string().min(1).describe('搜索查詢字符串，建議保持主題一致性。支援高級運算符：site:example.com (限制網站)、filetype:pdf (文件類型)、intitle:關鍵詞 (標題搜索)等。'),
           count: z.number().int().min(1).max(this.config.search.maxCount).default(this.config.search.defaultCount).describe(`返回結果數量 (1-${this.config.search.maxCount})`),
           language: z.enum(supportedLanguages as any).default(this.config.search.defaultLanguage).describe("搜索語言/地區代碼。格式: 地區-語言。例如: wt-wt (全球), us-en (美國), tw-tzh (台灣), hk-tzh (香港), cn-zh (中國)"),
           safe_search: z.enum(["strict", "moderate", "off"]).default(this.config.search.defaultSafeSearch).describe("安全搜索級別: strict (嚴格), moderate (中等), off (關閉)"),
