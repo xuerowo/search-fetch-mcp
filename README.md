@@ -36,11 +36,25 @@
 ## 📦 安裝與設置
 
 ### 系統需求
-- Bun >= 1.0.0
-- Node.js >= 18 (用於 Playwright)
+- Node.js >= 18 (用於 Playwright 和運行時)
 - Linux/macOS/Windows (支援 WSL)
 
-### 安裝步驟
+### 快速安裝 (推薦)
+
+**使用 npx 直接運行** (無需本地安裝)：
+```bash
+npx search-fetch-mcp
+```
+
+**全域安裝**：
+```bash
+npm install -g search-fetch-mcp
+
+# 然後直接運行
+search-fetch-mcp
+```
+
+### 開發者安裝
 
 1. **克隆項目**
 ```bash
@@ -51,6 +65,8 @@ cd search-fetch-mcp
 2. **安裝依賴**
 ```bash
 bun install
+# 或
+npm install
 ```
 
 3. **安裝 Playwright 瀏覽器** (WSL 環境)
@@ -67,6 +83,9 @@ bun run dev
 
 # 正常啟動
 bun start
+
+# 或從編譯後的版本運行
+npm run build && npm run start:dist
 ```
 
 ### WSL 環境特殊設定
@@ -104,7 +123,30 @@ npx playwright install-deps
 
 ### 配置範例
 
-**基本配置**（適合一般使用）：
+**NPX 配置**（推薦，無需本地安裝）：
+```json
+{
+  "mcpServers": {
+    "search-fetch-mcp": {
+      "command": "npx",
+      "args": ["search-fetch-mcp"]
+    }
+  }
+}
+```
+
+**全域安裝配置**：
+```json
+{
+  "mcpServers": {
+    "search-fetch-mcp": {
+      "command": "search-fetch-mcp"
+    }
+  }
+}
+```
+
+**本地開發配置**（適合開發者）：
 ```json
 {
   "mcpServers": {
@@ -121,8 +163,8 @@ npx playwright install-deps
 {
   "mcpServers": {
     "search-fetch-mcp": {
-      "command": "bun",
-      "args": ["C:/path/to/search-fetch-mcp/src/index.ts"],
+      "command": "npx",
+      "args": ["search-fetch-mcp"],
       "env": {
         "LOG_LEVEL": "info",
         "RATE_LIMIT_RPS": "2",

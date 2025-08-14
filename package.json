@@ -1,20 +1,38 @@
 {
   "name": "search-fetch-mcp",
   "version": "1.0.0",
-  "description": "MCP server providing web search and webpage fetching capabilities",
+  "description": "MCP server providing web search and webpage fetching capabilities with DuckDuckGo search and intelligent webpage fetching",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "bin": {
-    "search-fetch-mcp": "src/index.ts"
+    "search-fetch-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/search-fetch-mcp.git"
+  },
+  "homepage": "https://github.com/your-username/search-fetch-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/your-username/search-fetch-mcp/issues"
   },
   "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', '755')\"",
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
+    "start:dist": "node dist/index.js",
     "test": "bun test",
     "lint": "bunx eslint src/ --cache --stats",
     "lint:fix": "bunx eslint src/ --fix --cache",
     "typecheck": "bunx tsc --noEmit",
-    "format": "bunx prettier --write src/**/*.ts"
+    "format": "bunx prettier --write src/**/*.ts",
+    "prepare": "npm run build",
+    "prepack": "npm run build && npm run lint && npm run typecheck",
+    "inspector": "npx @modelcontextprotocol/inspector dist/index.js"
   },
   "keywords": [
     "mcp",
