@@ -9,7 +9,7 @@ bun.lock
 .bun/
 
 # Runtime and build files
-dist/
+# dist/ - 保留 dist 目錄用於 NPM 發布
 build/
 *.tsbuildinfo
 
