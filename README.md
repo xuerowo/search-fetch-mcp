@@ -37,7 +37,7 @@
 
 ### 系統需求
 - Node.js >= 18 (用於 Playwright 和運行時)
-- Linux/macOS/Windows (支援 WSL)
+- Linux/macOS/Windows
 
 ### 快速安裝 (推薦)
 
@@ -69,7 +69,7 @@ bun install
 npm install
 ```
 
-3. **安裝 Playwright 瀏覽器** (WSL 環境)
+3. **安裝 Playwright 瀏覽器** 
 ```bash
 # Windows PowerShell 中執行
 npx playwright install-deps
@@ -437,14 +437,6 @@ npx playwright install chromium
 - 瀏覽器實例採用池化管理
 - 內容截斷機制避免記憶體過載
 - 智能延遲策略平衡效能與反爬蟲
-
-### WSL 環境問題
-
-如果在 WSL 中遇到 Playwright 問題：
-
-1. 確保在 Windows PowerShell 中安裝瀏覽器
-2. 檢查 WSL 與 Windows 的網路連接
-3. 必要時可嘗試在 Windows 原生環境運行
 
 ## 📋 API 參考
 
