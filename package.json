@@ -1,6 +1,6 @@
 {
   "name": "search-fetch-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server providing web search and webpage fetching capabilities with DuckDuckGo search and intelligent webpage fetching",
   "type": "module",
   "main": "dist/index.js",
@@ -14,11 +14,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/search-fetch-mcp.git"
+    "url": "https://github.com/xuerowo/search-fetch-mcp.git"
   },
-  "homepage": "https://github.com/your-username/search-fetch-mcp#readme",
+  "homepage": "https://github.com/xuerowo/search-fetch-mcp#readme",
   "bugs": {
-    "url": "https://github.com/your-username/search-fetch-mcp/issues"
+    "url": "https://github.com/xuerowo/search-fetch-mcp/issues"
   },
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', '755')\"",

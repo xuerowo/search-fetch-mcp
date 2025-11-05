@@ -64,7 +64,12 @@ export declare class DuckDuckGoMCPServer {
     private calculateOptimalConcurrency;
     private calculateQueryDelay;
     /**
-     * 啟動 MCP 伺服器
+     * 連接 Transport（用於 HTTP 模式的動態 transport 創建）
+     * @param transport - Transport 實例
+     */
+    connectTransport(transport: any): Promise<void>;
+    /**
+     * 啟動 MCP 伺服器（stdio transport）
      */
     run(): Promise<void>;
 }

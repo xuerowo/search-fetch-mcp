@@ -42,11 +42,54 @@ export class DuckDuckGoMCPServer {
     try {
       validateConfig(this.config);
 
-      // 使用現代化的 McpServer
-      this.server = new McpServer({
-        name: this.config.name,
-        version: this.config.version,
-      });
+      // 使用現代化的 McpServer，添加 Server Instructions
+      this.server = new McpServer(
+        {
+          name: this.config.name,
+          version: this.config.version,
+        },
+        {
+          capabilities: {
+            tools: {},
+            logging: {},
+          },
+          instructions: `
+搜索和網頁獲取工作流最佳實踐：
+
+1. 搜索工作流：
+   - 單一查詢：使用 ddg_search 工具進行精確搜索
+   - 多個查詢：使用 ddg_batch_search 工具（最多5個並發請求，提升效率）
+   - 建議先搜索後獲取：ddg_search → webpage_fetch/batch_fetch
+
+2. 網頁獲取工作流：
+   - 標準靜態網站：使用 webpage_fetch（預設 HTTP 模式）
+   - 多個 URL 同時獲取：使用 batch_fetch（最多5個並發請求）
+   - 動態 SPA 網站（React/Vue/Angular）：設定 useSPA=true 啟用 Playwright 瀏覽器渲染
+   - 自動降級：SPA 模式失敗會自動切換到標準 HTTP 模式
+
+3. 內容處理策略：
+   - 長內容分段讀取：使用 startIndex 參數（每段最多50,000字符）
+   - 格式選擇：markdown（適合閱讀，預設）、html（保留結構）、text（純文字）、json（結構化數據）
+   - JSON 模式：自動提取網頁中的 JSON-LD、Schema.org 等結構化數據
+
+4. 限制與約束：
+   - 搜索速率限制：1 request/second（避免被封鎖）
+   - 批量操作並發：最多5個同時請求
+   - 內容截斷：預設50,000字符（可配置）
+   - 超時設定：搜索30秒、獲取60秒
+
+5. 錯誤處理與重試：
+   - 403 錯誤自動重試（切換 User-Agent、清除 Cookie、啟用 SPA 模式）
+   - 網路錯誤包含具體修復建議
+   - 結構化錯誤輸出（isError + 詳細訊息）
+
+6. 跨工具協作建議：
+   - 搭配文件系統伺服器：可將獲取的內容保存為本地檔案
+   - 搭配通知伺服器：可在批量操作完成時發送通知
+   - 數據流：搜索 → 批量獲取 → 內容分析 → 儲存結果
+          `.trim(),
+        }
+      );
 
       this.searcher = new DuckDuckGoSearcher(this.logger);
       this.fetcher = new WebpageFetcher(this.logger);
@@ -1385,12 +1428,32 @@ export class DuckDuckGoMCPServer {
   }
 
   /**
-   * 啟動 MCP 伺服器
+   * 連接 Transport（用於 HTTP 模式的動態 transport 創建）
+   * @param transport - Transport 實例
+   */
+  async connectTransport(transport: any): Promise<void> {
+    await this.server.connect(transport);
+    // 為 HTTP transport 也綁定 Logger 上下文
+    this.logger.setMcpContext(this.server, transport.sessionId || "http-session");
+  }
+
+  /**
+   * 啟動 MCP 伺服器（stdio transport）
    */
   async run(): Promise<void> {
     try {
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
+
+      // 連接成功後，綁定 Logger 的 MCP 上下文
+      // 注意：stdio transport 通常是單會話的，使用固定 sessionId
+      this.logger.setMcpContext(this.server, "stdio-session");
+
+      this.logger.info("MCP 伺服器已啟動", {
+        name: this.config.name,
+        version: this.config.version,
+        transport: "stdio",
+      });
     } catch (error) {
       this.logger.error("伺服器啟動失敗", error as Error);
       throw error;
@@ -1400,11 +1463,42 @@ export class DuckDuckGoMCPServer {
 
 /**
  * 主函數：啟動 DuckDuckGo MCP 伺服器
+ *
+ * 支援兩種 transport 模式：
+ * - stdio（預設）：用於 CLI 整合，如 Claude Desktop
+ * - http：用於生產部署，通過 HTTP/SSE
+ *
+ * 環境變數配置：
+ * - MCP_TRANSPORT: "stdio" | "http"（預設：stdio）
+ * - MCP_HTTP_PORT: HTTP 伺服器端口（預設：3000）
+ * - MCP_HTTP_HOST: HTTP 伺服器主機（預設：0.0.0.0）
+ * - MCP_HTTP_STATEFUL: "true" | "false"（預設：false，無狀態模式）
  */
 async function main() {
   try {
     const server = new DuckDuckGoMCPServer();
-    await server.run();
+    const transport = process.env.MCP_TRANSPORT || "stdio";
+
+    if (transport === "http") {
+      // HTTP Transport 模式
+      const { createHttpServer } = await import("./transports/http-server.js");
+
+      const port = parseInt(process.env.MCP_HTTP_PORT || "3000", 10);
+      const host = process.env.MCP_HTTP_HOST || "0.0.0.0";
+      const stateful = process.env.MCP_HTTP_STATEFUL === "true";
+
+      createHttpServer(server, {
+        port,
+        host,
+        stateful,
+        // 本地部署建議啟用 DNS 重綁定保護
+        allowedHosts: process.env.MCP_ALLOWED_HOSTS?.split(","),
+        allowedOrigins: process.env.MCP_ALLOWED_ORIGINS?.split(","),
+      });
+    } else {
+      // stdio Transport 模式（預設）
+      await server.run();
+    }
   } catch (error) {
     process.stderr.write(`伺服器啟動失敗: ${error}\n`);
     process.exit(1);

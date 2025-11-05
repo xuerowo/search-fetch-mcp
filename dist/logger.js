@@ -1,7 +1,7 @@
 /**
  * 分層級日誌系統
  * 支援多級別日誌記錄、結構化輸出和敏感資訊過濾
- * 所有輸出導向 stderr 以保持 MCP 協議的 stdout 純淨性
+ * 優先使用 MCP sendLoggingMessage，降級到 stderr
  */
 export class Logger {
     config;
@@ -11,8 +11,35 @@ export class Logger {
         warn: 2,
         error: 3,
     };
-    constructor(config) {
+    /**
+     * 可選的 MCP 伺服器實例，用於發送協議標準日誌
+     * @private
+     */
+    mcpServer;
+    /**
+     * 可選的會話 ID，用於 MCP 日誌通知
+     * @private
+     */
+    sessionId;
+    /**
+     * 建構日誌記錄器
+     * @param config - 日誌配置
+     * @param mcpServer - 可選的 MCP 伺服器實例（用於標準日誌）
+     * @param sessionId - 可選的會話 ID（用於 MCP 通知）
+     */
+    constructor(config, mcpServer, sessionId) {
         this.config = config;
+        this.mcpServer = mcpServer;
+        this.sessionId = sessionId;
+    }
+    /**
+     * 設定 MCP 伺服器和會話 ID（用於後期綁定）
+     * @param mcpServer - MCP 伺服器實例
+     * @param sessionId - 會話 ID
+     */
+    setMcpContext(mcpServer, sessionId) {
+        this.mcpServer = mcpServer;
+        this.sessionId = sessionId;
     }
     /**
      * 記錄調試信息
@@ -68,23 +95,58 @@ export class Logger {
         this.output(entry, level);
     }
     /**
-     * 輸出日志到控制台
+     * 輸出日誌 - 優先使用 MCP 協議，降級到 stderr
      */
     output(entry, level) {
+        // 優先使用 MCP sendLoggingMessage（如果可用）
+        if (this.mcpServer && this.sessionId) {
+            try {
+                // 映射日誌級別到 MCP 標準級別
+                const mcpLevel = this.mapToMcpLevel(level);
+                // 構建 MCP 日誌數據
+                let logData = entry.message;
+                if (entry.error) {
+                    logData += `\nError: ${entry.error.name}: ${entry.error.message}`;
+                    if (entry.error.stack && this.config.level === "debug") {
+                        logData += `\nStack: ${entry.error.stack}`;
+                    }
+                }
+                if (entry.meta && Object.keys(entry.meta).length > 0) {
+                    logData += `\nMeta: ${JSON.stringify(entry.meta, null, 2)}`;
+                }
+                // 發送 MCP 標準日誌（通過底層 server 實例）
+                // 注意：McpServer 不直接暴露 sendLoggingMessage，需要通過 server 屬性訪問
+                this.mcpServer.server?.sendLoggingMessage?.({
+                    level: mcpLevel,
+                    data: logData,
+                    logger: "search-fetch-mcp",
+                }, this.sessionId);
+                return; // 成功發送 MCP 日誌，結束
+            }
+            catch (error) {
+                // MCP 日誌發送失敗，降級到 stderr
+                console.error(`[Logger] Failed to send MCP log: ${error}`);
+            }
+        }
+        // 降級：輸出到 stderr（保持 stdout 純淨給 JSON-RPC）
         const formattedMessage = this.formatMessage(entry);
-        // 所有日志都輸出到 stderr，保持 stdout 純淨給 JSON-RPC
+        console.error(formattedMessage);
+    }
+    /**
+     * 映射日誌級別到 MCP 標準級別
+     */
+    mapToMcpLevel(level) {
         switch (level) {
-            case "error":
-                console.error(formattedMessage);
-                break;
-            case "warn":
-                console.error(formattedMessage); // 使用 stderr
-                break;
             case "debug":
-                console.error(formattedMessage); // 使用 stderr
-                break;
+                return "debug";
+            case "info":
+                return "info";
+            case "warn":
+                return "warning";
+            case "error":
+                return "error";
             default:
-                console.error(formattedMessage); // 使用 stderr
+                return "info";
         }
     }
     /**

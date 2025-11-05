@@ -135,10 +135,10 @@ export declare class DuckDuckGoSearcher {
     healthCheck(): Promise<{
         status: "healthy" | "degraded" | "unhealthy";
         details: {
-            searcher: "ok" | "warning";
-            browserPool: "error" | "ok" | "warning" | undefined;
-            concurrency: "error" | "ok" | "warning";
-            network: "error" | "ok" | "warning";
+            searcher: "warning" | "ok";
+            browserPool: "error" | "warning" | "ok" | undefined;
+            concurrency: "error" | "warning" | "ok";
+            network: "error" | "warning" | "ok";
         };
         stats: {
             searcher: {

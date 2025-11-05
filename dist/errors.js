@@ -1,0 +1,280 @@
+/**
+ * MCP 標準錯誤處理系統
+ *
+ * 遵循 Model Context Protocol 的錯誤處理規範，包含：
+ * - JSON-RPC 2.0 標準錯誤碼
+ * - MCP 協議自定義錯誤碼
+ * - 業務邏輯錯誤類別
+ *
+ * @see https://spec.modelcontextprotocol.io/specification/protocol/errors/
+ */
+/**
+ * MCP 標準錯誤碼
+ *
+ * 基於 JSON-RPC 2.0 規範和 MCP 協議擴展定義
+ */
+export var ErrorCode;
+(function (ErrorCode) {
+    // JSON-RPC 2.0 標準錯誤碼 (-32768 to -32000)
+    /** 解析錯誤：接收到的 JSON 無法解析 */
+    ErrorCode[ErrorCode["ParseError"] = -32700] = "ParseError";
+    /** 無效請求：發送的 JSON 不是有效的請求對象 */
+    ErrorCode[ErrorCode["InvalidRequest"] = -32600] = "InvalidRequest";
+    /** 方法未找到：請求的方法不存在或不可用 */
+    ErrorCode[ErrorCode["MethodNotFound"] = -32601] = "MethodNotFound";
+    /** 無效參數：方法參數無效或缺失 */
+    ErrorCode[ErrorCode["InvalidParams"] = -32602] = "InvalidParams";
+    /** 內部錯誤：伺服器內部錯誤 */
+    ErrorCode[ErrorCode["InternalError"] = -32603] = "InternalError";
+    // MCP 協議自定義錯誤碼 (-32099 to -32000)
+    /** 連接關閉：客戶端或伺服器連接已關閉 */
+    ErrorCode[ErrorCode["ConnectionClosed"] = -32000] = "ConnectionClosed";
+    /** 請求超時：請求處理超過時間限制 */
+    ErrorCode[ErrorCode["RequestTimeout"] = -32001] = "RequestTimeout";
+    /** 資源未找到：請求的資源不存在 */
+    ErrorCode[ErrorCode["ResourceNotFound"] = -32002] = "ResourceNotFound";
+    /** 資源不可用：資源暫時不可用 */
+    ErrorCode[ErrorCode["ResourceUnavailable"] = -32003] = "ResourceUnavailable";
+    /** 工具執行失敗：工具執行過程中發生錯誤 */
+    ErrorCode[ErrorCode["ToolExecutionError"] = -32004] = "ToolExecutionError";
+})(ErrorCode || (ErrorCode = {}));
+/**
+ * MCP 標準錯誤類別
+ *
+ * 用於協議級別的錯誤，包含標準錯誤碼和可選的詳細數據。
+ * 這些錯誤會直接拋出，導致 MCP 請求失敗。
+ *
+ * @class McpError
+ * @extends Error
+ * @example
+ * ```typescript
+ * throw new McpError(
+ *   ErrorCode.InvalidParams,
+ *   "參數驗證失敗",
+ *   { field: "query", reason: "不能為空" }
+ * );
+ * ```
+ */
+export class McpError extends Error {
+    code;
+    data;
+    /**
+     * 建構 MCP 標準錯誤
+     *
+     * @param code - 標準錯誤碼（來自 ErrorCode 枚舉）
+     * @param message - 人類可讀的錯誤訊息
+     * @param data - 可選的錯誤詳細數據（如：錯誤欄位、堆棧跟蹤等）
+     */
+    constructor(code, message, data) {
+        super(message);
+        this.code = code;
+        this.data = data;
+        this.name = 'McpError';
+        // 保持正確的堆棧跟蹤（僅在 V8 引擎中）
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, McpError);
+        }
+    }
+    /**
+     * 將錯誤轉換為 JSON-RPC 2.0 錯誤格式
+     */
+    toJSON() {
+        return {
+            code: this.code,
+            message: this.message,
+            data: this.data,
+        };
+    }
+}
+// ============================================================================
+// 業務邏輯錯誤類別
+// ============================================================================
+// 這些錯誤用於工具執行層級，不會直接拋出，而是返回 { isError: true, ... }
+// ============================================================================
+/**
+ * 搜索錯誤類別
+ *
+ * 當搜索操作失敗時使用，包含錯誤代碼和 HTTP 狀態碼。
+ * 用於工具執行層級，不會直接拋出異常。
+ *
+ * @class SearchError
+ * @extends Error
+ * @example
+ * ```typescript
+ * throw new SearchError("搜索服務不可用", "SERVICE_UNAVAILABLE", 503);
+ * ```
+ */
+export class SearchError extends Error {
+    code;
+    statusCode;
+    /**
+     * 建構搜索錯誤
+     *
+     * @param message - 錯誤訊息
+     * @param code - 可選的錯誤代碼（如：NETWORK_ERROR, TIMEOUT 等）
+     * @param statusCode - 可選的 HTTP 狀態碼
+     */
+    constructor(message, code, statusCode) {
+        super(message);
+        this.code = code;
+        this.statusCode = statusCode;
+        this.name = "SearchError";
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, SearchError);
+        }
+    }
+}
+/**
+ * 速率限制錯誤類別
+ *
+ * 當請求超出設定的速率限制時拋出的錯誤，包含重試等待時間資訊。
+ *
+ * @class RateLimitError
+ * @extends Error
+ * @example
+ * ```typescript
+ * throw new RateLimitError("請求過於頻繁，請稍後重試", 60); // 60 秒後重試
+ * ```
+ */
+export class RateLimitError extends Error {
+    retryAfter;
+    /**
+     * 建構速率限制錯誤
+     *
+     * @param message - 錯誤訊息
+     * @param retryAfter - 可選的建議重試等待時間（秒）
+     */
+    constructor(message, retryAfter) {
+        super(message);
+        this.retryAfter = retryAfter;
+        this.name = "RateLimitError";
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, RateLimitError);
+        }
+    }
+}
+/**
+ * 驗證錯誤類別
+ *
+ * 當輸入資料驗證失敗時拋出的錯誤，包含失敗的欄位資訊。
+ *
+ * @class ValidationError
+ * @extends Error
+ * @example
+ * ```typescript
+ * throw new ValidationError("查詢字串不能為空", "query");
+ * ```
+ */
+export class ValidationError extends Error {
+    field;
+    /**
+     * 建構驗證錯誤
+     *
+     * @param message - 錯誤訊息
+     * @param field - 可選的驗證失敗欄位名稱
+     */
+    constructor(message, field) {
+        super(message);
+        this.field = field;
+        this.name = "ValidationError";
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, ValidationError);
+        }
+    }
+}
+/**
+ * 網頁獲取錯誤類別
+ *
+ * 當網頁獲取操作失敗時使用，包含錯誤代碼和 HTTP 狀態碼。
+ * 用於工具執行層級，不會直接拋出異常。
+ *
+ * @class FetchError
+ * @extends Error
+ * @example
+ * ```typescript
+ * throw new FetchError("無法連接到伺服器", "NETWORK_ERROR", 0);
+ * ```
+ */
+export class FetchError extends Error {
+    code;
+    statusCode;
+    /**
+     * 建構網頁獲取錯誤
+     *
+     * @param message - 錯誤訊息
+     * @param code - 可選的錯誤代碼（如：TIMEOUT, NETWORK_ERROR 等）
+     * @param statusCode - 可選的 HTTP 狀態碼
+     */
+    constructor(message, code, statusCode) {
+        super(message);
+        this.code = code;
+        this.statusCode = statusCode;
+        this.name = "FetchError";
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, FetchError);
+        }
+    }
+}
+// ============================================================================
+// 錯誤處理輔助函數
+// ============================================================================
+/**
+ * 將任意錯誤轉換為標準 MCP 錯誤
+ *
+ * @param error - 原始錯誤對象
+ * @returns MCP 標準錯誤
+ */
+export function toMcpError(error) {
+    if (error instanceof McpError) {
+        return error;
+    }
+    if (error instanceof ValidationError) {
+        return new McpError(ErrorCode.InvalidParams, error.message, { field: error.field });
+    }
+    if (error instanceof RateLimitError) {
+        return new McpError(ErrorCode.RequestTimeout, error.message, { retryAfter: error.retryAfter });
+    }
+    if (error instanceof Error) {
+        return new McpError(ErrorCode.InternalError, error.message, { stack: error.stack });
+    }
+    return new McpError(ErrorCode.InternalError, String(error));
+}
+/**
+ * 檢查錯誤是否為可重試錯誤
+ *
+ * @param error - 錯誤對象
+ * @returns 是否可重試
+ */
+export function isRetryableError(error) {
+    if (error instanceof RateLimitError) {
+        return true;
+    }
+    if (error instanceof McpError) {
+        return error.code === ErrorCode.RequestTimeout ||
+            error.code === ErrorCode.ResourceUnavailable;
+    }
+    if (error instanceof SearchError || error instanceof FetchError) {
+        // 特定 HTTP 狀態碼可重試
+        return error.statusCode === 429 || // Too Many Requests
+            error.statusCode === 503 || // Service Unavailable
+            error.statusCode === 504; // Gateway Timeout
+    }
+    return false;
+}
+/**
+ * 從錯誤中提取重試延遲時間（秒）
+ *
+ * @param error - 錯誤對象
+ * @returns 重試延遲時間（秒），如果不適用則返回 undefined
+ */
+export function getRetryDelay(error) {
+    if (error instanceof RateLimitError) {
+        return error.retryAfter;
+    }
+    if (error instanceof McpError && error.data && typeof error.data === 'object') {
+        const data = error.data;
+        return data.retryAfter;
+    }
+    return undefined;
+}
+//# sourceMappingURL=errors.js.map

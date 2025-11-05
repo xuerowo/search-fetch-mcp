@@ -1,6 +1,7 @@
 /**
  * MCP 伺服器型別定義
  */
+export { ErrorCode, McpError, SearchError, RateLimitError, ValidationError, FetchError, toMcpError, isRetryableError, getRetryDelay, } from "./errors.js";
 export interface SearchOptions {
     /** 返回結果數量 (1-50) */
     count?: number;
@@ -121,66 +122,6 @@ export interface ServerConfig {
 }
 export interface RateLimitConfig {
     requestsPerSecond: number;
-}
-/**
- * 搜索錯誤類別
- *
- * 專門處理搜索相關錯誤的自訂錯誤類別，提供錯誤代碼和 HTTP 狀態碼
- * 等額外資訊，便於錯誤處理和調試。
- *
- * @class SearchError
- * @extends Error
- * @example
- * ```typescript
- * throw new SearchError("搜索請求失敗", "SEARCH_FAILED", 500);
- * ```
- */
-export declare class SearchError extends Error {
-    code?: string | undefined;
-    statusCode?: number | undefined;
-    constructor(message: string, code?: string | undefined, statusCode?: number | undefined);
-}
-/**
- * 速率限制錯誤類別
- *
- * 當請求超出設定的速率限制時拋出的錯誤，包含重試等待時間資訊。
- *
- * @class RateLimitError
- * @extends Error
- * @example
- * ```typescript
- * throw new RateLimitError("請求過於頻繁", 60); // 60 秒後重試
- * ```
- */
-export declare class RateLimitError extends Error {
-    retryAfter?: number | undefined;
-    /**
-     * 建構速率限制錯誤
-     * @param message - 錯誤訊息
-     * @param retryAfter - 建議重試等待時間（秒）
-     */
-    constructor(message: string, retryAfter?: number | undefined);
-}
-/**
- * 驗證錯誤類別
- *
- * 當輸入資料驗證失敗時拋出的錯誤，包含失敗的欄位資訊。
- *
- * @class ValidationError
- * @extends Error
- * @example
- * ```typescript
- * throw new ValidationError("查詢字串不能為空", "query");
- * ```
- */
-export declare class ValidationError extends Error {
-    field?: string | undefined;
-    /**
-     * 建構驗證錯誤
-     * @param message - 錯誤訊息
-     * @param field - 驗證失敗的欄位名稱
-     */
-    constructor(message: string, field?: string | undefined);
 }
 /**
  * 型別守衛函數：檢查值是否為 Error 型別
@@ -365,29 +306,6 @@ export interface WebpageMetadata {
     siteName?: string;
     /** 圖片 URL */
     image?: string;
-}
-/**
- * 網頁獲取錯誤類別
- *
- * 專門處理網頁獲取相關錯誤的自訂錯誤類別。
- *
- * @class FetchError
- * @extends Error
- * @example
- * ```typescript
- * throw new FetchError("網頁無法訪問", "ACCESS_DENIED", 403);
- * ```
- */
-export declare class FetchError extends Error {
-    code?: string | undefined;
-    statusCode?: number | undefined;
-    /**
-     * 建構網頁獲取錯誤
-     * @param message - 錯誤訊息
-     * @param code - 錯誤代碼
-     * @param statusCode - HTTP 狀態碼
-     */
-    constructor(message: string, code?: string | undefined, statusCode?: number | undefined);
 }
 /**
  * 批量搜索結果介面
