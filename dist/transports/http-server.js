@@ -48,7 +48,7 @@ export function createHttpServer(mcpServer, options = {}) {
             try {
                 body = await parseRequestBody(req);
             }
-            catch (error) {
+            catch (_error) {
                 res.writeHead(400, { "Content-Type": "application/json" });
                 res.end(JSON.stringify({ error: "Invalid JSON body" }));
                 return;
@@ -65,6 +65,7 @@ export function createHttpServer(mcpServer, options = {}) {
             });
             // 清理 transport
             res.on("close", () => {
+                // eslint-disable-next-line no-console
                 transport.close().catch(console.error);
             });
             // 連接 MCP 伺服器
@@ -87,6 +88,7 @@ export function createHttpServer(mcpServer, options = {}) {
                 sessionIdGenerator: () => generateSessionId(),
                 onsessioninitialized: (sid) => {
                     transports.set(sid, transport);
+                    // eslint-disable-next-line no-console
                     console.error(`[HTTP] New session created: ${sid}`);
                 },
                 enableJsonResponse: true,
@@ -98,6 +100,7 @@ export function createHttpServer(mcpServer, options = {}) {
             transport.onclose = () => {
                 if (transport.sessionId) {
                     transports.delete(transport.sessionId);
+                    // eslint-disable-next-line no-console
                     console.error(`[HTTP] Session closed: ${transport.sessionId}`);
                 }
             };
@@ -116,14 +119,18 @@ export function createHttpServer(mcpServer, options = {}) {
     });
     // 啟動伺服器
     httpServer.listen(port, host, () => {
+        // eslint-disable-next-line no-console
         console.error(`[HTTP] MCP HTTP Server listening on http://${host}:${port}`);
+        // eslint-disable-next-line no-console
         console.error(`[HTTP] Mode: ${stateful ? "Stateful (session-based)" : "Stateless"}`);
         if (allowedHosts || allowedOrigins) {
+            // eslint-disable-next-line no-console
             console.error(`[HTTP] DNS rebinding protection enabled`);
         }
     });
     // 錯誤處理
     httpServer.on("error", (error) => {
+        // eslint-disable-next-line no-console
         console.error(`[HTTP] Server error:`, error);
     });
     return httpServer;
