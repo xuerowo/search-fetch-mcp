@@ -2,6 +2,17 @@
 
 🚀 現代化的 MCP (Model Context Protocol) 伺服器，提供強大的網路搜索和網頁內容獲取功能。基於 Bun + TypeScript 構建，支援 DuckDuckGo 搜索、智能網頁獲取、SPA 網站支援和批量處理。
 
+[![npm version](https://img.shields.io/npm/v/search-fetch-mcp.svg)](https://www.npmjs.com/package/search-fetch-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## 🎉 v1.1.0 新功能
+
+- ✅ **MCP 2025 標準化**：完全符合 Model Context Protocol 最佳實踐
+- 🌐 **HTTP Transport 支援**：支援無狀態和有狀態 HTTP/SSE 傳輸
+- 📊 **標準化錯誤處理**：實作 JSON-RPC 2.0 和 MCP 錯誤碼
+- 📝 **Server Instructions**：為 LLM 提供詳細的工具使用指南
+- 🔧 **集中管理常量**：移除 Magic Numbers，提升可維護性
+
 ## ✨ 主要特色
 
 - 🔍 **DuckDuckGo 搜索**：支援單一和批量搜索，包含高級搜索運算符
@@ -11,6 +22,8 @@
 - 🛡️ **反爬蟲機制**：智能 User-Agent 輪換、請求延遲、重試策略
 - 📄 **多格式輸出**：Markdown、HTML、純文字、JSON 格式
 - 🔧 **豐富配置**：環境變數和配置檔案完全自訂
+- 🌐 **HTTP Transport**：支援 stdio 和 HTTP/SSE 兩種傳輸模式（v1.1.0+）
+- 📊 **MCP 標準化**：完全符合 MCP 2025 協議規範（v1.1.0+）
 
 ## 🛠️ 技術架構
 
@@ -25,8 +38,14 @@
 - **代碼品質**: ESLint + TypeScript + Prettier
 
 ### 核心模組
+- **index.ts**: MCP 伺服器主入口（包含 Server Instructions）
 - **searcher.ts**: DuckDuckGo 搜索實作
 - **fetcher.ts**: 網頁內容獲取（支援標準 HTTP 和 SPA）
+- **errors.ts**: 標準化錯誤處理（MCP + JSON-RPC 2.0）⭐ v1.1.0
+- **constants.ts**: 集中管理常量和配置 ⭐ v1.1.0
+- **messages.ts**: 集中管理錯誤訊息和提示 ⭐ v1.1.0
+- **transports/http-server.ts**: HTTP/SSE Transport 支援 ⭐ v1.1.0
+- **logger.ts**: 結構化日誌系統（支援 MCP sendLoggingMessage）
 - **playwright-node-bridge.ts**: Node.js Playwright 橋接器
 - **rate-limiter.ts**: 請求速率限制
 - **validator.ts**: 輸入驗證
@@ -77,6 +96,8 @@ npx playwright install chromium
 ```
 
 4. **啟動伺服器**
+
+**Stdio 模式**（預設，用於 Claude Desktop）：
 ```bash
 # 開發模式（監控文件變化）
 bun run dev
@@ -86,6 +107,21 @@ bun start
 
 # 或從編譯後的版本運行
 npm run build && npm run start:dist
+```
+
+**HTTP 模式** ⭐ v1.1.0（用於生產部署）：
+```bash
+# 無狀態模式（推薦用於生產環境）
+MCP_TRANSPORT=http MCP_HTTP_PORT=3000 bun start
+
+# 有狀態模式（用於開發環境，包含會話管理）
+MCP_TRANSPORT=http MCP_HTTP_STATEFUL=true MCP_HTTP_PORT=3000 bun start
+
+# 帶 DNS 重綁定保護（本地部署）
+MCP_TRANSPORT=http \
+MCP_ALLOWED_HOSTS="127.0.0.1,localhost" \
+MCP_HTTP_PORT=3000 \
+bun start
 ```
 
 ### WSL 環境特殊設定
@@ -309,6 +345,14 @@ await mcp.call("batch_fetch", {
 ### 環境變數
 
 ```bash
+# Transport 設定 ⭐ v1.1.0
+MCP_TRANSPORT=stdio                 # Transport 類型: stdio | http
+MCP_HTTP_PORT=3000                  # HTTP 伺服器端口
+MCP_HTTP_HOST=0.0.0.0              # HTTP 伺服器主機
+MCP_HTTP_STATEFUL=false            # 是否啟用有狀態模式（會話管理）
+MCP_ALLOWED_HOSTS=127.0.0.1,localhost  # DNS 保護 - 允許的主機名（逗號分隔）
+MCP_ALLOWED_ORIGINS=http://localhost   # DNS 保護 - 允許的來源（逗號分隔）
+
 # 速率限制
 RATE_LIMIT_RPS=1                    # 每秒請求數
 
@@ -367,8 +411,11 @@ src/
 ├── index.ts               # 主入口，MCP 伺服器
 ├── config.ts              # 配置管理
 ├── types.ts               # TypeScript 型別定義
+├── errors.ts              # 標準化錯誤處理 ⭐ v1.1.0
+├── constants.ts           # 常量管理 ⭐ v1.1.0
+├── messages.ts            # 錯誤訊息管理 ⭐ v1.1.0
 ├── validator.ts           # 輸入驗證
-├── logger.ts              # 日誌記錄
+├── logger.ts              # 日誌記錄（支援 MCP sendLoggingMessage）
 ├── rate-limiter.ts        # 速率限制
 ├── searcher.ts            # DuckDuckGo 搜索實作
 ├── fetcher.ts             # 網頁獲取實作
@@ -377,7 +424,9 @@ src/
 ├── concurrency-limiter.ts # 並發控制
 ├── fingerprint-service.ts # 指紋管理
 ├── playwright-node-bridge.ts    # Playwright 橋接器
-└── playwright-processor.ts      # Playwright 處理器
+├── playwright-processor.ts      # Playwright 處理器
+└── transports/
+    └── http-server.ts     # HTTP/SSE Transport ⭐ v1.1.0
 ```
 
 ### 代碼規範
@@ -475,8 +524,37 @@ npx playwright install chromium
 5. **內容控制**：根據需求調整 `useReadability` 和 `maxLength`
 6. **速率管理**：適當的請求間隔避免被封鎖
 
+## 📝 版本歷史
+
+### v1.1.0 (2025-01-06)
+- ✅ **MCP 2025 標準化**：完全符合 Model Context Protocol 最佳實踐
+- ✅ **HTTP Transport 支援**：支援無狀態和有狀態 HTTP/SSE 傳輸
+- ✅ **標準化錯誤處理**：實作 JSON-RPC 2.0 和 MCP ErrorCode
+- ✅ **Server Instructions**：為 LLM 提供詳細的工具使用指南
+- ✅ **集中管理常量和訊息**：新增 constants.ts 和 messages.ts
+- ✅ **改善日誌系統**：支援 MCP sendLoggingMessage 協議
+- ✅ **新增 4 個模組**：errors.ts, constants.ts, messages.ts, http-server.ts
+- ✅ **完全向後兼容**：所有現有功能和 API 保持不變
+
+### v1.0.0 (2024)
+- 🎉 初始發布
+- DuckDuckGo 搜索和批量搜索
+- 智能網頁獲取（HTTP + SPA）
+- 多格式輸出支援
+- 反爬蟲機制
+- 速率限制和並發控制
+
+---
+
+## 🔗 相關連結
+
+- **npm 包**: https://www.npmjs.com/package/search-fetch-mcp
+- **GitHub 倉庫**: https://github.com/xuerowo/search-fetch-mcp
+- **問題追蹤**: https://github.com/xuerowo/search-fetch-mcp/issues
+- **MCP 官方文檔**: https://modelcontextprotocol.io
+
 ---
 
 *Built with ❤️ using Bun + TypeScript*
 
-*README.md 由 Claude 撰寫*
+*符合 MCP 2025 標準 | MIT License*
