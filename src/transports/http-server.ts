@@ -74,18 +74,6 @@ export function createHttpServer(
       return;
     }
 
-    // 健康檢查端點
-    if (req.method === "GET" && req.url === "/") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({
-        status: "ok",
-        service: "search-fetch-mcp",
-        version: "1.1.0",
-        transport: "http"
-      }));
-      return;
-    }
-
     // 解析請求體（POST 請求）
     let body: unknown;
     if (req.method === "POST") {
